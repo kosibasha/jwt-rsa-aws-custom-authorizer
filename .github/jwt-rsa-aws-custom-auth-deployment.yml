@@ -1,0 +1,94 @@
+name: Carrier Frontend CI/CD
+
+on:
+  push:
+    branches: ['master']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/frontend
+
+    strategy:
+      matrix:
+        node-version: [22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # Automatically assume 'dev' for push events
+      - name: Set JWKS_URI for dev environment
+        if: ${{ github.event_name == 'push' || github.event.inputs.environment == 'dev' }}
+        run: echo "JWKS_URI=https://dev-k8apzm17qh08je8d.eu.auth0.com/.well-known/jwks.json" >> $GITHUB_ENV
+
+      - name: Set JWKS_URI for prod environment
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        run: echo "JWKS_URI=TODO" >> $GITHUB_ENV
+
+      - name: Set AUDIENCE for dev environment
+        if: ${{ github.event_name == 'push' || github.event.inputs.environment == 'dev' }}
+        run: echo "AUDIENCE=https://dev-k8apzm17qh08je8d.eu.auth0.com/api/v2/" >> $GITHUB_ENV
+
+      - name: Set AUDIENCE for prod environment
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        run: echo "AUDIENCE=TODO" >> $GITHUB_ENV
+
+      - name: Set TOKEN_ISSUER for dev environment
+        if: ${{ github.event_name == 'push' || github.event.inputs.environment == 'dev' }}
+        run: echo "TOKEN_ISSUER=https://dev-k8apzm17qh08je8d.eu.auth0.com/" >> $GITHUB_ENV
+
+      - name: Set TOKEN_ISSUER for prod environment
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        run: echo "TOKEN_ISSUER=TODO" >> $GITHUB_ENV
+
+      - run: npm --version
+      - run: npm install --legacy-peer-deps
+      - run: npm run bundle
+
+      - name: Configure AWS CLI DEV
+        if: ${{ github.event_name == 'push' || (github.event.inputs.environment == 'dev' && github.ref_name == 'master') }}
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Upload custom-authorizer.zip to AWS Authenticator Lambda Function for DEV ENV
+        run: |
+          FUNCTION_NAME="backend-dev"
+          ZIP_FILE="apps/backend/target/function.zip"
+
+          # Update Lambda function code
+          aws lambda update-function-code --function-name $FUNCTION_NAME --zip-file fileb://$ZIP_FILE
+
+      - name: Notify Mattermost of success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-Type: application/json' -d '{
+            "text": "✅ Carrier Frontend CI/CD pipeline succeeded for branch: `master`. Environment: `${{ github.event.inputs.environment || 'dev' }}`. :tada:"
+          }' https://mattermost.home-server-vkl.synology.me/hooks/wf5egqnupjysxcfr1dtx73k34e
+
+      - name: Notify Mattermost of failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-Type: application/json' -d '{
+            "text": "❌ Carrier Frontend CI/CD pipeline failed for branch: `master`. Environment: `${{ github.event.inputs.environment || 'dev' }}`. :x:"
+          }' https://mattermost.home-server-vkl.synology.me/hooks/wf5egqnupjysxcfr1dtx73k34e
