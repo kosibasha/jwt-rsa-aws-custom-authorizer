@@ -4,28 +4,15 @@ const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
 const util = require('util');
 
-const getPolicyDocument = (effect, resource) => {
-    const policyDocument = {
-        Version: '2012-10-17', // default version
-        Statement: [{
-            Action: 'execute-api:Invoke', // default action
-            Effect: effect,
-            Resource: resource,
-        }]
-    };
-    return policyDocument;
-}
-
-
 // extract and return the Bearer Token from the Lambda event parameters
 const getToken = (params) => {
-    if (!params.type || params.type !== 'TOKEN') {
-        throw new Error('Expected "event.type" parameter to have value "TOKEN"');
+    if (!params.type || params.type !== 'REQUEST') {
+        throw new Error('Expected "event.type" parameter to have value "REQUEST"');
     }
 
-    const tokenString = params.authorizationToken;
+    const tokenString = params.headers.authorization;
     if (!tokenString) {
-        throw new Error('Expected "event.authorizationToken" parameter to be set');
+        throw new Error('Expected "event.headers.authorization" parameter to be set');
     }
 
     const match = tokenString.match(/^Bearer (.*)$/);
@@ -55,16 +42,13 @@ module.exports.authenticate = (params) => {
             const signingKey = key.publicKey || key.rsaPublicKey;
             return jwt.verify(token, signingKey, jwtOptions);
         })
-        .then((decoded)=> ({
-            principalId: decoded.sub,
-            policyDocument: getPolicyDocument('Allow', params.methodArn),
-            context: { scope: decoded.scope }
-        }));
+        .then(() => true)  // Token is valid
+        .catch(() => false);  // Token verification failed
 }
 
- const client = jwksClient({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 10, // Default value
-        jwksUri: process.env.JWKS_URI
-  });
+const client = jwksClient({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 10, // Default value
+    jwksUri: process.env.JWKS_URI
+});

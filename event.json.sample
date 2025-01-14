@@ -1,5 +1,44 @@
 {
-    "type" : "TOKEN",
-    "authorizationToken" : "Bearer ACCESS_TOKEN",
-    "methodArn":"arn:aws:execute-api:us-east-1:1234567890:apiId/stage/method/resourcePath"
+    "version": "2.0",
+    "type": "REQUEST",
+    "routeArn": "arn:aws:execute-api:eu-central-1:863518446261:22wlb7ub7d/dev/GET/routes/id/ROUTE-Bihac-Munich",
+    "identitySource": [
+        "Bearer ACCESS_TOKEN"
+    ],
+    "routeKey": "GET /routes/id/{id}",
+    "rawPath": "/dev/routes/id/ROUTE-Bihac-Munich",
+    "rawQueryString": "",
+    "headers": {
+        "authorization": "Bearer ACCESS_TOKEN",
+        "cache-control": "no-cache",
+        "content-length": "0",
+        "host": "22wlb7ub7d.execute-api.eu-central-1.amazonaws.com",
+        "method": "get-route-by-id",
+        "postman-token": "88350215-fac8-4e5f-9d35-219f1b01853a",
+        "x-amzn-trace-id": "Root=1-6786e2cf-511140bb5472d0f36f3329a6",
+        "x-forwarded-for": "213.109.200.50",
+        "x-forwarded-port": "443",
+        "x-forwarded-proto": "https"
+    },
+    "requestContext": {
+        "accountId": "863518446261",
+        "apiId": "22wlb7ub7d",
+        "domainName": "22wlb7ub7d.execute-api.eu-central-1.amazonaws.com",
+        "domainPrefix": "22wlb7ub7d",
+        "http": {
+            "method": "GET",
+            "path": "/dev/routes/id/ROUTE-Bihac-Munich",
+            "protocol": "HTTP/1.1",
+            "sourceIp": "213.109.200.50",
+            "userAgent": ""
+        },
+        "requestId": "EZhgcjoeFiAEMhw=",
+        "routeKey": "GET /routes/id/{id}",
+        "stage": "dev",
+        "time": "14/Jan/2025:22:18:55 +0000",
+        "timeEpoch": 1736893135222
+    },
+    "pathParameters": {
+        "id": "ROUTE-Bihac-Munich"
+    }
 }
