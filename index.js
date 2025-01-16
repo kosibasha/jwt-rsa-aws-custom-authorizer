@@ -1,24 +1,21 @@
 const lib = require('./lib');
 
 // Lambda function handler
-module.exports.handler = async (event, context, callback) => {
+module.exports.handler = async (event, context) => {
     let response = {
-        "isAuthorized": false
+        "isAuthorized": false,
     };
 
     try {
-        // Validate token with your authentication logic
-        await lib.authenticate(event);
+        // Validate token and get response from lib
+        const authResponse = await lib.authenticate(event);
 
-        // If token is valid, update the response
-        console.log("allowed");
-        response = {
-            "isAuthorized": true
-        };
-    }
-    catch (err) {
-        console.log("Unauthorized", err);
-        context.fail("Unauthorized");
+        // Update the response with authorization details
+        console.log('Authorization successful:', authResponse);
+        response = authResponse;
+    } catch (err) {
+        console.log('Unauthorized:', err.message);
+        context.fail('Unauthorized');
     }
 
     // Return the final response
