@@ -33,6 +33,7 @@ module.exports.authenticate = async (params) => {
     const token = getToken(params);
 
     const decoded = jwt.decode(token, { complete: true });
+    console.log(decoded.payload);
     if (!decoded || !decoded.header || !decoded.header.kid) {
         throw new Error('Invalid token');
     }
